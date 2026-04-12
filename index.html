@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A minimal blog on systems, tools, and the craft of computing.">
+  <title>~/ · terminal notes</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <a href="index.html" class="site-name"><span>~/</span>&nbsp;terminal notes</a>
+    <nav>
+      <a href="index.html">posts</a>
+      <a href="about.html">about</a>
+      <a href="https://github.com" target="_blank">github</a>
+    </nav>
+  </div>
+</header>
+    <div class="tape t1" ></div>
+    <div class="tape t2"></div>
+    <div class="tape t3"></div>
+    <div class="tape t4"></div>
+    <div class="tape t5"></div>
+    <div class="tape t6"></div>
+
+<script>
+function removeAllTapes() {
+  document.querySelectorAll(".tape").forEach(el => {
+    el.classList.add("removing");
+    setTimeout(() => el.remove(), 300);
+  });
+}
+
+document.addEventListener("click", removeAllTapes);
+</script>
+<main>
+
+  <div class="wrap">
+
+
+<div class="wip-overlay">
+  <div class="tape-bg"></div>
+  <div class="content">
+    <h2>Under construction</h2>
+    <p>This page isn't ready yet. Come back soon — or continue if you dare.</p>
+    <a class="btn" href="/your-site">Continue to site &rarr;</a>
+  </div>
+</div>
+    <section class="hero">
+      <p class="hero-tag">// systems · tools · craft</p>
+      <h1>Notes from a minimal&nbsp;machine.</h1>
+      <p class="hero-sub">
+        Documentation of a Linux setup built for speed. Arch, dwm, st —
+        the suckless stack. No desktop environment, no noise, no nonsense.
+      </p>
+    </section>
+
+    <section class="post-list">
+      <p class="section-label">recent posts</p>
+
+      <a href="posts/dwm-setup.html" style="display:contents; text-decoration:none;">
+        <article class="post-item">
+          <time class="post-date">2025-01-01</time>
+          <div class="post-meta">
+            <span class="post-title">Building a minimal dev environment with dwm and st</span>
+            <span class="post-desc">
+              A complete, production-ready setup — patches, config.h, status bar,
+              shell, keybindings. Everything from a fresh Arch install to a working
+              keyboard-driven workflow.
+            </span>
+            <div class="post-tags">
+              <span class="tag">arch</span>
+              <span class="tag">dwm</span>
+              <span class="tag">suckless</span>
+              <span class="tag">zsh</span>
+              <span class="tag">systems</span>
+            </div>
+          </div>
+        </article>
+      </a>
+
+      <!-- future posts slot in here -->
+
+    </section>
+
+    <div class="about-strip">
+      <span class="label">about</span>
+      <p>
+        A <a href="about.html">systems programmer</a> writing about tools, workflows, and
+        the craft of keeping a machine minimal. Everything here is tested on a
+        ThinkPad T480 running Arch Linux.
+        Source on <a href="https://github.com" target="_blank">GitHub</a>.
+      </p>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2025 terminal notes</span>
+    <span>plain html · no js · no trackers</span>
+  </div>
+</footer>
+</body>
+</html>
+

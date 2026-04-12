@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A complete production-ready dwm and st setup on Arch Linux — patches, config.h, status bar, zsh, keybindings.">
+  <title>Building a minimal dev environment with dwm and st · ~/</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <a href="../index.html" class="site-name"><span>~/</span>&nbsp;terminal notes</a>
+    <nav>
+      <a href="../index.html">posts</a>
+      <a href="../about.html">about</a>
+      <a href="https://github.com" target="_blank">github</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <div class="post-header">
+      <p class="post-tag">// arch · suckless · systems</p>
+      <h1>Building a minimal dev environment<br>with dwm and&nbsp;st</h1>
+      <div class="post-byline">
+        <span>2025-01-01</span>
+        <span>12 min read</span>
+        <span>ThinkPad T480 · Arch Linux</span>
+      </div>
+    </div>
+
+    <article class="body">
+
+      <blockquote>
+        This is a living document. Everything below is copy-paste ready and
+        tested on a fresh Arch install. No fluff — only what I actually run.
+      </blockquote>
+
+      <div class="toc">
+        <p class="toc-title">// contents</p>
+        <ol>
+          <li><a href="#packages">Package installation</a></li>
+          <li><a href="#build">Build &amp; install</a></li>
+          <li><a href="#patches">Patches</a></li>
+          <li><a href="#dwm-config">dwm config.h</a></li>
+          <li><a href="#st-config">st config.h</a></li>
+          <li><a href="#shell">Shell setup (zsh)</a></li>
+          <li><a href="#tools">Essential tools</a></li>
+          <li><a href="#keybindings">Keybindings</a></li>
+          <li><a href="#theme">Fonts &amp; theme</a></li>
+          <li><a href="#startup">Startup (.xinitrc)</a></li>
+          <li><a href="#statusbar">Status bar</a></li>
+        </ol>
+      </div>
+
+      <!-- ── 1 PACKAGES ─────────────────────────────── -->
+      <h2 id="packages">1. Package installation</h2>
+
+      <p>
+        One <code>pacman</code> invocation for everything needed. No AUR manager
+        required initially — add <code>yay</code> for nerd fonts afterward.
+      </p>
+
+<pre><code>pacman -S --needed \
+  base-devel git xorg-server xorg-xinit xorg-xsetroot xorg-xrandr \
+  xorg-xrdb libx11 libxft libxinerama freetype2 fontconfig \
+  zsh zsh-completions fzf ripgrep fd bat eza tmux \
+  dmenu dunst picom xclip xdotool acpi brightnessctl \
+  ttf-jetbrains-mono noto-fonts noto-fonts-emoji \
+  neovim nodejs npm rust gcc gdb make cmake \
+  wget curl jq htop lsof strace</code></pre>
+
+<pre><code><span class="cm"># AUR — install yay first, then:</span>
+yay -S --needed nerd-fonts-jetbrains-mono</code></pre>
+
+      <!-- ── 2 BUILD ──────────────────────────────────── -->
+      <h2 id="build">2. Build &amp; install</h2>
+
+      <p>Clone from suckless directly. Never use distro packages for dwm or st.</p>
+
+<pre><code>mkdir -p ~/.builds && cd ~/.builds
+
+<span class="cm"># dwm</span>
+git clone https://git.suckless.org/dwm
+cd dwm
+<span class="cm"># apply patches → edit config.h → build</span>
+sudo make clean install && cd ..
+
+<span class="cm"># st</span>
+git clone https://git.suckless.org/st
+cd st
+sudo make clean install && cd ..
+
+<span class="cm"># dmenu (suckless version for consistency)</span>
+git clone https://git.suckless.org/dmenu
+cd dmenu && sudo make clean install</code></pre>
+
+      <p>Directory layout after cloning:</p>
+
+<pre><code>~
+├── .builds/
+│   ├── dwm/
+│   └── st/
+├── .config/
+│   ├── zsh/
+│   └── nvim/
+├── .local/bin/     <span class="cm"># custom scripts</span>
+└── dev/</code></pre>
+
+      <!-- ── 3 PATCHES ───────────────────────────────── -->
+      <h2 id="patches">3. Patches</h2>
+
+      <h3>dwm</h3>
+
+      <table>
+        <thead>
+          <tr><th>patch</th><th>why</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>autostart</td><td>run <code>~/.dwm/autostart.sh</code> on launch</td></tr>
+          <tr><td>pertag</td><td>independent layout per tag</td></tr>
+          <tr><td>vanitygaps</td><td>inner/outer gaps for visual breathing room</td></tr>
+          <tr><td>fullscreen</td><td>true fullscreen toggle (no bar)</td></tr>
+          <tr><td>attachbottom</td><td>new clients below master, not above</td></tr>
+          <tr><td>statusbar</td><td>clickable status bar segments</td></tr>
+        </tbody>
+      </table>
+
+      <h3>st</h3>
+
+      <table>
+        <thead>
+          <tr><th>patch</th><th>why</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>alpha</td><td>background transparency</td></tr>
+          <tr><td>scrollback</td><td>scroll without tmux dependency</td></tr>
+          <tr><td>font2</td><td>fallback font for emoji/symbols</td></tr>
+          <tr><td>boxdraw</td><td>clean box-drawing character rendering</td></tr>
+          <tr><td>undercurl</td><td>wavy underlines for LSP diagnostics</td></tr>
+        </tbody>
+      </table>
+
+      <p>Apply patches before editing <code>config.h</code>:</p>
+
+<pre><code>cd ~/.builds/dwm
+curl -O https://dwm.suckless.org/patches/autostart/dwm-autostart-20210120-cb3f58a.diff
+patch -p1 < dwm-autostart-20210120-cb3f58a.diff
+<span class="cm"># resolve any conflicts in config.def.h manually</span></code></pre>
+
+      <!-- ── 4 DWM CONFIG ─────────────────────────────── -->
+      <h2 id="dwm-config">4. dwm config.h</h2>
+
+      <p>
+        Gruvbox dark palette throughout. <kbd>Super</kbd> as modifier.
+        ThinkPad brightness and volume keys wired to hardware controls.
+      </p>
+
+<pre><code><span class="cm">/* appearance */</span>
+<span class="kw">static const unsigned int</span> borderpx  = <span class="nu">2</span>;
+<span class="kw">static const unsigned int</span> gappx     = <span class="nu">6</span>;
+<span class="kw">static const unsigned int</span> snap      = <span class="nu">32</span>;
+<span class="kw">static const int</span>          showbar   = <span class="nu">1</span>;
+<span class="kw">static const int</span>          topbar    = <span class="nu">1</span>;
+
+<span class="kw">static const char</span> *fonts[] = {
+    <span class="st">"JetBrainsMono Nerd Font:size=10"</span>,
+    <span class="st">"Noto Color Emoji:size=10"</span>
+};
+
+<span class="cm">/* gruvbox dark */</span>
+<span class="kw">static const char</span> col_bg[]     = <span class="st">"#1d2021"</span>;
+<span class="kw">static const char</span> col_bg1[]    = <span class="st">"#282828"</span>;
+<span class="kw">static const char</span> col_fg[]     = <span class="st">"#ebdbb2"</span>;
+<span class="kw">static const char</span> col_accent[] = <span class="st">"#d79921"</span>;
+<span class="kw">static const char</span> col_blue[]   = <span class="st">"#458588"</span>;
+
+<span class="kw">static const char</span> *colors[][<span class="nu">3</span>] = {
+    [SchemeNorm] = { col_fg,  col_bg,     col_bg1  },
+    [SchemeSel]  = { col_bg,  col_accent, col_blue },
+};
+
+<span class="cm">/* tags */</span>
+<span class="kw">static const char</span> *tags[] = {
+    <span class="st">"1"</span>,<span class="st">"2"</span>,<span class="st">"3"</span>,<span class="st">"4"</span>,<span class="st">"5"</span>,<span class="st">"6"</span>,<span class="st">"7"</span>,<span class="st">"8"</span>,<span class="st">"9"</span>
+};
+
+<span class="cm">/* layout — tile default, monocle, float */</span>
+<span class="kw">static const float</span> mfact     = <span class="nu">0.55</span>;
+<span class="kw">static const int</span>   nmaster   = <span class="nu">1</span>;
+<span class="kw">static const int</span>   resizehints = <span class="nu">0</span>; <span class="cm">/* ignore size hints */</span></code></pre>
+
+      <p>See the <a href="https://dwm.suckless.org/customisation/" target="_blank">full customisation reference</a> for all available fields.</p>
+
+      <!-- ── 5 ST CONFIG ──────────────────────────────── -->
+      <h2 id="st-config">5. st config.h</h2>
+
+<pre><code><span class="cm">/* font */</span>
+<span class="kw">static char</span> *font = <span class="st">"JetBrainsMono Nerd Font:pixelsize=14:antialias=true"</span>;
+<span class="kw">static char</span> *font2[] = { <span class="st">"Noto Color Emoji:pixelsize=14"</span> };
+
+<span class="kw">static int</span> borderpx = <span class="nu">12</span>;
+
+<span class="cm">/* transparency (alpha patch) */</span>
+<span class="kw">static const float</span> alpha = <span class="nu">0.92</span>;
+
+<span class="cm">/* gruvbox colours — indices 0-15 */</span>
+<span class="kw">static const char</span> *colorname[] = {
+    <span class="st">"#1d2021"</span>, <span class="st">"#cc241d"</span>, <span class="st">"#98971a"</span>, <span class="st">"#d79921"</span>,
+    <span class="st">"#458588"</span>, <span class="st">"#b16286"</span>, <span class="st">"#689d6a"</span>, <span class="st">"#a89984"</span>,
+    <span class="st">"#928374"</span>, <span class="st">"#fb4934"</span>, <span class="st">"#b8bb26"</span>, <span class="st">"#fabd2f"</span>,
+    <span class="st">"#83a598"</span>, <span class="st">"#d3869b"</span>, <span class="st">"#8ec07c"</span>, <span class="st">"#ebdbb2"</span>,
+    [<span class="nu">255</span>] = <span class="nu">0</span>,
+    <span class="st">"#ebdbb2"</span>, <span class="cm">/* defaultfg */</span>
+    <span class="st">"#1d2021"</span>, <span class="cm">/* defaultbg */</span>
+    <span class="st">"#d79921"</span>, <span class="cm">/* cursor    */</span>
+};
+
+<span class="kw">static char</span> *shell = <span class="st">"/bin/zsh"</span>;
+<span class="kw">static int</span>  scroll_history = <span class="nu">4000</span>;</code></pre>
+
+      <!-- ── 6 SHELL ───────────────────────────────────── -->
+      <h2 id="shell">6. Shell setup</h2>
+
+      <p>
+        No plugin manager. Two plugins cloned manually.
+        Configuration split across <code>~/.zshenv</code> and <code>~/.config/zsh/.zshrc</code>.
+      </p>
+
+<pre><code>chsh -s /bin/zsh
+mkdir -p ~/.config/zsh/plugins</code></pre>
+
+      <h3>~/.zshenv</h3>
+
+<pre><code><span class="kw">export</span> ZDOTDIR=<span class="st">"$HOME/.config/zsh"</span>
+<span class="kw">export</span> PATH=<span class="st">"$HOME/.local/bin:$PATH"</span>
+<span class="kw">export</span> EDITOR=nvim
+<span class="kw">export</span> VISUAL=nvim
+<span class="kw">export</span> PAGER=less
+<span class="kw">export</span> MANPAGER=<span class="st">"nvim +Man!"</span>
+<span class="kw">export</span> FZF_DEFAULT_COMMAND=<span class="st">'fd --type f --hidden --follow --exclude .git'</span>
+<span class="kw">export</span> FZF_DEFAULT_OPTS=<span class="st">'--height 40% --layout=reverse --border'</span></code></pre>
+
+      <h3>~/.config/zsh/.zshrc (essentials)</h3>
+
+<pre><code><span class="cm"># history</span>
+HISTSIZE=<span class="nu">50000</span>; SAVEHIST=<span class="nu">50000</span>; HISTFILE=<span class="st">"$ZDOTDIR/.zsh_history"</span>
+<span class="kw">setopt</span> HIST_IGNORE_DUPS HIST_IGNORE_SPACE SHARE_HISTORY
+
+<span class="cm"># completion</span>
+<span class="kw">autoload</span> -Uz compinit && compinit -d <span class="st">"$ZDOTDIR/.zcompdump"</span>
+<span class="kw">zstyle</span> <span class="st">':completion:*'</span> menu select
+
+<span class="cm"># vi mode</span>
+<span class="kw">bindkey</span> -v
+<span class="kw">export</span> KEYTIMEOUT=<span class="nu">1</span>
+<span class="kw">bindkey</span> <span class="st">'^R'</span> history-incremental-search-backward
+
+<span class="cm"># prompt (no external deps)</span>
+<span class="kw">autoload</span> -Uz vcs_info
+<span class="fn">precmd</span>() { vcs_info }
+<span class="kw">zstyle</span> <span class="st">':vcs_info:git:*'</span> formats <span class="st">' %b'</span>
+<span class="kw">setopt</span> PROMPT_SUBST
+<span class="kw">PROMPT</span>=<span class="st">'%F{yellow}%~%F{blue}${vcs_info_msg_0_}%f %(?.%F{green}.%F{red})❯%f '</span>
+
+<span class="cm"># plugins</span>
+<span class="fn">source</span> <span class="st">"$ZDOTDIR/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"</span>
+<span class="fn">source</span> <span class="st">"$ZDOTDIR/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"</span>
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+<span class="cm"># fzf</span>
+<span class="fn">source</span> /usr/share/fzf/key-bindings.zsh
+<span class="fn">source</span> /usr/share/fzf/completion.zsh
+
+<span class="fn">source</span> <span class="st">"$ZDOTDIR/aliases.zsh"</span></code></pre>
+
+      <h3>Clone plugins</h3>
+
+<pre><code>git clone https://github.com/zdharma-continuum/fast-syntax-highlighting \
+  ~/.config/zsh/plugins/fast-syntax-highlighting
+
+git clone https://github.com/zsh-users/zsh-autosuggestions \
+  ~/.config/zsh/plugins/zsh-autosuggestions</code></pre>
+
+      <h3>Key aliases</h3>
+
+<pre><code><span class="cm"># replacements</span>
+alias ls=<span class="st">'eza --group-directories-first'</span>
+alias ll=<span class="st">'eza -la --git'</span>
+alias cat=<span class="st">'bat --style=plain'</span>
+alias grep=<span class="st">'rg'</span>
+alias find=<span class="st">'fd'</span>
+alias vim=<span class="st">'nvim'</span>
+
+<span class="cm"># git shortcuts</span>
+alias gs=<span class="st">'git status -sb'</span>
+alias gl=<span class="st">'git log --oneline --graph --decorate'</span>
+alias gd=<span class="st">'git diff'</span>
+
+<span class="cm"># config quick-edit</span>
+alias edwm=<span class="st">'nvim ~/.builds/dwm/config.h'</span>
+alias est=<span class="st">'nvim ~/.builds/st/config.h'</span>
+alias ec=<span class="st">'nvim ~/.config/zsh/.zshrc'</span></code></pre>
+
+      <!-- ── 7 TOOLS ─────────────────────────────────── -->
+      <h2 id="tools">7. Essential tools</h2>
+
+      <h3>git</h3>
+
+<pre><code>git config --global user.name  <span class="st">"Your Name"</span>
+git config --global user.email <span class="st">"you@example.com"</span>
+git config --global core.editor nvim
+git config --global init.defaultBranch main
+git config --global pull.rebase true
+git config --global core.pager <span class="st">"bat --style=plain"</span>
+git config --global alias.lg <span class="st">"log --oneline --graph --decorate --all"</span></code></pre>
+
+      <h3>lf (file manager)</h3>
+
+<pre><code>yay -S lf
+mkdir -p ~/.config/lf</code></pre>
+
+<pre><code><span class="cm"># ~/.config/lf/lfrc</span>
+set icons true
+set hidden true
+set drawbox true
+
+cmd open ${{
+    case $(file --mime-type "$f" -bL) in
+        text/*|application/json) $EDITOR "$f" ;;
+        image/*)   sxiv "$f"    ;;
+        application/pdf) zathura "$f" ;;
+        *) xdg-open "$f" ;;
+    esac
+}}
+
+map <span class="st">&lt;enter&gt;</span> open
+map D delete
+map R rename
+map . set hidden!</code></pre>
+
+      <!-- ── 8 KEYBINDINGS ──────────────────────────── -->
+      <h2 id="keybindings">8. Keybindings</h2>
+
+      <table>
+        <thead><tr><th>binding</th><th>action</th></tr></thead>
+        <tbody>
+          <tr><td>Super+Shift+Return</td><td>spawn terminal (st)</td></tr>
+          <tr><td>Super+P</td><td>dmenu launcher</td></tr>
+          <tr><td>Super+Shift+B</td><td>firefox</td></tr>
+          <tr><td>Super+Shift+C</td><td>kill client</td></tr>
+          <tr><td>Super+J / K</td><td>focus next / prev</td></tr>
+          <tr><td>Super+H / L</td><td>resize master</td></tr>
+          <tr><td>Super+Return</td><td>zoom (swap to master)</td></tr>
+          <tr><td>Super+Tab</td><td>last tag</td></tr>
+          <tr><td>Super+T</td><td>tile layout</td></tr>
+          <tr><td>Super+M</td><td>monocle layout</td></tr>
+          <tr><td>Super+F</td><td>float layout</td></tr>
+          <tr><td>Super+1–9</td><td>switch tag</td></tr>
+          <tr><td>Super+Shift+1–9</td><td>move client to tag</td></tr>
+          <tr><td>Super+B</td><td>toggle bar</td></tr>
+          <tr><td>Super+Shift+L</td><td>lock screen (slock)</td></tr>
+          <tr><td>Super+Shift+Q</td><td>quit dwm</td></tr>
+        </tbody>
+      </table>
+
+      <h3>st</h3>
+
+      <table>
+        <thead><tr><th>binding</th><th>action</th></tr></thead>
+        <tbody>
+          <tr><td>Ctrl+Shift+C / V</td><td>copy / paste</td></tr>
+          <tr><td>Ctrl+Shift+PgUp / Dn</td><td>zoom in / out</td></tr>
+          <tr><td>Shift+PgUp / PgDn</td><td>scroll history</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ── 9 THEME ─────────────────────────────────── -->
+      <h2 id="theme">9. Fonts &amp; theme</h2>
+
+      <p>
+        <strong>Gruvbox dark hard</strong> — consistently applied across dwm,
+        st, nvim, and dmenu. One palette, zero cognitive switching cost.
+      </p>
+
+      <table>
+        <thead><tr><th>role</th><th>hex</th></tr></thead>
+        <tbody>
+          <tr><td>bg</td><td>#1d2021</td></tr>
+          <tr><td>bg1</td><td>#282828</td></tr>
+          <tr><td>fg</td><td>#ebdbb2</td></tr>
+          <tr><td>accent (yellow)</td><td>#d79921</td></tr>
+          <tr><td>blue</td><td>#458588</td></tr>
+          <tr><td>red</td><td>#cc241d</td></tr>
+          <tr><td>green</td><td>#98971a</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>Font:</strong> JetBrainsMono Nerd Font — 10pt UI, 14px terminal.</p>
+
+<pre><code><span class="cm"># ~/.Xresources</span>
+Xft.dpi:       96
+Xft.antialias: true
+Xft.hinting:   true
+Xft.hintstyle: hintslight
+Xft.rgba:      rgb
+Xcursor.size:  16
+Xcursor.theme: Adwaita</code></pre>
+
+      <!-- ── 10 STARTUP ────────────────────────────── -->
+      <h2 id="startup">10. Startup (.xinitrc)</h2>
+
+<pre><code><span class="cm">#!/bin/sh</span>
+
+xrdb -merge ~/.Xresources
+
+<span class="cm"># keyboard</span>
+xset r rate <span class="nu">200</span> <span class="nu">40</span>
+setxkbmap -layout us -option caps:escape   <span class="cm"># Caps → Escape</span>
+
+<span class="cm"># display (adjust to your output name)</span>
+xrandr --output eDP-1 --mode <span class="nu">1920x1080</span> --dpi <span class="nu">96</span>
+
+<span class="cm"># natural scrolling</span>
+xinput set-prop <span class="st">"SynPS/2 Synaptics TouchPad"</span> \
+  <span class="st">"libinput Natural Scrolling Enabled"</span> <span class="nu">1</span> <span class="nu">2</span>>/dev/null
+
+<span class="cm"># compositor</span>
+picom --daemon --backend glx --vsync \
+  --inactive-opacity <span class="nu">0.9</span> --active-opacity <span class="nu">1.0</span> \
+  --shadow --shadow-radius <span class="nu">8</span> &
+
+dunst &
+~/.local/bin/dwmstatus &
+
+<span class="kw">exec</span> dwm</code></pre>
+
+      <p>Auto-start X on login — append to <code>~/.config/zsh/.zprofile</code>:</p>
+
+<pre><code><span class="kw">if</span> [ -z <span class="st">"$DISPLAY"</span> ] && [ <span class="st">"$XDG_VTNR"</span> = <span class="st">"1"</span> ]; then
+  <span class="kw">exec</span> startx
+fi</code></pre>
+
+      <!-- ── 11 STATUS BAR ──────────────────────────── -->
+      <h2 id="statusbar">11. Status bar</h2>
+
+      <p>
+        Pure bash. Sets the root window name every 5 seconds.
+        dwm reads it for the bar. No external deps — battery, volume, network, clock.
+      </p>
+
+<pre><code><span class="cm">#!/bin/bash</span>
+<span class="cm"># ~/.local/bin/dwmstatus</span>
+
+interval=<span class="nu">5</span>
+
+<span class="fn">get_bat</span>() {
+  bat=$(cat /sys/class/power_supply/BAT0/capacity)
+  status=$(cat /sys/class/power_supply/BAT0/status)
+  case <span class="st">"$status"</span> in
+    Charging)    echo <span class="st">"󰂄 ${bat}%"</span> ;;
+    Discharging) echo <span class="st">"󰁹 ${bat}%"</span> ;;
+    *)           echo <span class="st">"󰁹 FULL"</span>   ;;
+  esac
+}
+
+<span class="fn">get_vol</span>() {
+  vol=$(pactl get-sink-volume @DEFAULT_SINK@ | grep -oP <span class="st">'\d+%'</span> | head -1)
+  mute=$(pactl get-sink-mute @DEFAULT_SINK@ | grep -c <span class="st">'yes'</span>)
+  [ <span class="st">"$mute"</span> -gt <span class="nu">0</span> ] && echo <span class="st">"󰖁 mute"</span> || echo <span class="st">"󰕾 $vol"</span>
+}
+
+<span class="fn">get_date</span>() { date +<span class="st">" %a %d %b  %H:%M"</span>; }
+
+<span class="kw">while</span> true; do
+  xsetroot -name <span class="st">"$(get_vol)  $(get_bat)  $(get_date)"</span>
+  sleep <span class="st">"$interval"</span>
+done</code></pre>
+
+<pre><code>chmod +x ~/.local/bin/dwmstatus</code></pre>
+
+      <blockquote>
+        That's the full setup. From <code>pacstrap</code> to a working dwm session,
+        this is everything — no steps omitted, nothing assumed.
+        Rebuild time from scratch: under 30 minutes.
+      </blockquote>
+
+    </article>
+
+    <div class="post-nav">
+      <div><!-- no previous post --></div>
+      <div style="text-align: right;">
+        <a href="../index.html">
+          <span class="nav-label">back to</span>
+          all posts →
+        </a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2025 terminal notes</span>
+    <span>plain html · no js · no trackers</span>
+  </div>
+</footer>
+
+</body>
+</html>
