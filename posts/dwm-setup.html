@@ -28,7 +28,7 @@
       <p class="post-tag">// arch · suckless · systems</p>
       <h1>Building a minimal dev environment<br>with dwm and&nbsp;st</h1>
       <div class="post-byline">
-        <span>2025-01-01</span>
+        <span>2026-04-21</span>
         <span>12 min read</span>
         <span>ThinkPad T480 · Arch Linux</span>
       </div>
@@ -63,20 +63,20 @@
 
       <p>
         One <code>pacman</code> invocation for everything needed. No AUR manager
-        required initially — add <code>yay</code> for nerd fonts afterward.
+        required initially — add <code>paru</code> for nerd fonts afterward.
       </p>
 
 <pre><code>pacman -S --needed \
   base-devel git xorg-server xorg-xinit xorg-xsetroot xorg-xrandr \
   xorg-xrdb libx11 libxft libxinerama freetype2 fontconfig \
-  zsh zsh-completions fzf ripgrep fd bat eza tmux \
+  zsh zsh-completions fzf ripgrep fd eza tmux \
   dmenu dunst picom xclip xdotool acpi brightnessctl \
   ttf-jetbrains-mono noto-fonts noto-fonts-emoji \
   neovim nodejs npm rust gcc gdb make cmake \
   wget curl jq htop lsof strace</code></pre>
 
-<pre><code><span class="cm"># AUR — install yay first, then:</span>
-yay -S --needed nerd-fonts-jetbrains-mono</code></pre>
+<pre><code><span class="cm"># AUR — install paru first, then:</span>
+paru -S --needed nerd-fonts-jetbrains-mono</code></pre>
 
       <!-- ── 2 BUILD ──────────────────────────────────── -->
       <h2 id="build">2. Build &amp; install</h2>
@@ -109,8 +109,8 @@ cd dmenu && sudo make clean install</code></pre>
 ├── .config/
 │   ├── zsh/
 │   └── nvim/
-├── .local/bin/     <span class="cm"># custom scripts</span>
-└── dev/</code></pre>
+└── .local/bin/     <span class="cm"># custom scripts</span>
+</code></pre>
 
       <!-- ── 3 PATCHES ───────────────────────────────── -->
       <h2 id="patches">3. Patches</h2>
@@ -310,19 +310,9 @@ alias ec=<span class="st">'nvim ~/.config/zsh/.zshrc'</span></code></pre>
       <!-- ── 7 TOOLS ─────────────────────────────────── -->
       <h2 id="tools">7. Essential tools</h2>
 
-      <h3>git</h3>
-
-<pre><code>git config --global user.name  <span class="st">"Your Name"</span>
-git config --global user.email <span class="st">"you@example.com"</span>
-git config --global core.editor nvim
-git config --global init.defaultBranch main
-git config --global pull.rebase true
-git config --global core.pager <span class="st">"bat --style=plain"</span>
-git config --global alias.lg <span class="st">"log --oneline --graph --decorate --all"</span></code></pre>
-
       <h3>lf (file manager)</h3>
 
-<pre><code>yay -S lf
+<pre><code>paru -S lf
 mkdir -p ~/.config/lf</code></pre>
 
 <pre><code><span class="cm"># ~/.config/lf/lfrc</span>

@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A complete Arch Linux minimal home server setup for ThinkPad T480 — installation, hardening, developer toolchain, dotfiles.">
+  <title>Arch Linux Minimal Home Server — ThinkPad T480 · ~/</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <a href="#" class="site-name"><span>~/</span>&nbsp;terminal notes</a>
+    <nav>
+      <a href="#">posts</a>
+      <a href="#">about</a>
+      <a href="https://github.com/Manav-madhu" target="_blank">github</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <div class="post-header">
+      <p class="post-tag">// arch · thinkpad · homeserver · devops</p>
+      <h1>Arch Linux Minimal Home Server<br>— ThinkPad T480</h1>
+      <div class="post-byline">
+        <span>A minimal arch linux server</span>
+        <span>Testing &amp; Development</span>
+        <span>ThinkPad T480 · Arch Linux</span>
+      </div>
+    </div>
+
+    <article class="body">
+
+      <blockquote>
+        <p>This is a living document. Everything below is copy-paste ready and
+        tested on a fresh Arch install. No fluff — only what I actually run.
+        A fresh install should reach full working state in under 30 minutes via the bootstrap script.</p>
+      </blockquote>
+
+      <!-- Philosophy -->
+      <div class="philosophy">
+        <div class="phil-item">
+          <div class="desc">Every package installed has a reason.</div>
+        </div>
+        <div class="phil-item">
+          <div class="rule">Everything is a file.</div>
+          <div class="desc">Config lives in <code>~/.dotfiles</code>, version-controlled on GitHub.</div>
+        </div>
+        <div class="phil-item">
+          <div class="rule">Reproducibility.</div>
+          <div class="desc">Fresh install → full working state in &lt; 30 min .</div>
+          <div class="rule">Terminal is home.</div>
+          <div class="desc">No GUI, no display manager. tmux + nvim is the entire IDE.</div>
+        </div>
+      </div>
+
+      <!-- TOC -->
+      <div class="toc">
+        <p class="toc-title">// contents</p>
+        <ol>
+          <li><a href="#hardware">Hardware Overview</a></li>
+          <li><a href="#usb">Create Bootable USB</a></li>
+          <li><a href="#network-pre">Pre-Install Network</a></li>
+          <li><a href="#disk">Disk Partitioning</a></li>
+          <li><a href="#format">Format &amp; Mount</a></li>
+          <li><a href="#mirrors">Select Mirrors</a></li>
+          <li><a href="#base">Install Base System</a></li>
+          <li><a href="#chroot">Chroot &amp; Configure</a></li>
+          <li><a href="#bootloader">Bootloader</a></li>
+          <li><a href="#post-install">Post-Install Config</a></li>
+          <li><a href="#ssh">SSH Hardening</a></li>
+          <li><a href="#firewall">Firewall (nftables)</a></li>
+          <li><a href="#aur">AUR Helper (paru)</a></li>
+          <li><a href="#shell">Shell (zsh)</a></li>
+          <li><a href="#tmux">tmux</a></li>
+          <li><a href="#nvim">Neovim</a></li>
+          <li><a href="#languages">Languages &amp; Runtimes</a></li>
+          <li><a href="#git">Git Config</a></li>
+          <li><a href="#services">Dev Services</a></li>
+          <li><a href="#hardening">Hardening</a></li>
+          <li><a href="#dotfiles">Dotfiles Management</a></li>
+          <li><a href="#bootstrap">Bootstrap Script</a></li>
+          <li><a href="#quickref">Quick Reference</a></li>
+        </ol>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ PART 0 – HARDWARE -->
+      <p class="part-label">// hardware</p>
+      <p class="part-heading">ThinkPad T480 Overview</p>
+
+      <h2 id="hardware" data-n="0">Hardware</h2>
+
+      <div class="callout">
+        <strong>Before touching a keyboard, know your machine.</strong>
+      </div>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>T480 Spec</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>CPU</td><td>Intel Core i5/i7 8th Gen</td><td>Good Linux support, intel_pstate driver</td></tr>
+          <tr><td>RAM</td><td>Up to 64GB DDR4 (2 slots)</td><td>Max it out — ZFS or Docker loves RAM</td></tr>
+          <tr><td>NIC</td><td>Intel I219-LM</td><td>Excellent kernel support, use for server NIC</td></tr>
+          <tr><td>WiFi</td><td>Intel 8265</td><td>iwlwifi driver, works OOTB</td></tr>
+          <tr><td>Storage</td><td>NVMe M.2 + 2.5" SATA</td><td>Use NVMe for OS, SATA for data if available</td></tr>
+          <tr><td>Display</td><td>14" IPS</td><td>Irrelevant for a headless server</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h3>BIOS Settings</h3>
+      <p>Change these before install:</p>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Security › Secure Boot</td><td>Disabled</td></tr>
+          <tr><td>Config › Network › Wake on LAN</td><td>Enabled</td></tr>
+          <tr><td>Startup › UEFI/Legacy Boot</td><td>UEFI Only</td></tr>
+          <tr><td>Config › Thunderbolt BIOS Assist Mode</td><td>Enabled</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ PART 1 – INSTALL -->
+      <p class="part-label" style="margin-top:4rem;">// part 1</p>
+      <p class="part-heading">Installation</p>
+
+      <h2 id="usb" data-n="1">Create Bootable USB</h2>
+
+<pre><code><span class="cm"># Verify the ISO (ALWAYS do this)</span>
+gpg --keyserver-options auto-key-retrieve --verify archlinux-*.iso.sig
+
+<span class="cm"># Find your USB device — be careful, wrong device = data loss</span>
+lsblk
+
+<span class="cm"># Write the ISO (replace sdX with your USB device, e.g., sdb)</span>
+dd if=archlinux-*.iso of=/dev/sdX bs=4M status=progress oflag=sync</code></pre>
+
+      <p>Boot the T480 with <kbd>F12</kbd> to get the boot menu. Select your USB.</p>
+
+      <h2 id="network-pre" data-n="2">Pre-Installation: Network</h2>
+
+      <h3>Wired (recommended for install)</h3>
+<pre><code><span class="cm"># Should come up automatically via DHCP</span>
+ip link
+ping archlinux.org</code></pre>
+
+      <h3>Wireless (if needed)</h3>
+<pre><code>iwctl
+<span class="cm"># Inside iwctl:</span>
+device list
+station wlan0 scan
+station wlan0 get-networks
+station wlan0 connect "YourSSID"
+exit</code></pre>
+
+      <h3>Console Keyboard &amp; Clock</h3>
+<pre><code>loadkeys us
+timedatectl set-ntp true
+timedatectl status</code></pre>
+
+      <h2 id="disk" data-n="3">Disk Partitioning (UEFI + GPT)</h2>
+
+      <div class="callout callout-warn">
+        <strong>Critical step.</strong> We use a simple 3-partition layout on NVMe.
+      </div>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Partition</th><th>Size</th><th>Type</th><th>Mount</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>/dev/nvme0n1p1</td><td>512M</td><td>EFI System</td><td>/boot/efi</td><td>Bootloader</td></tr>
+          <tr><td>/dev/nvme0n1p2</td><td>4G</td><td>Linux swap</td><td>[SWAP]</td><td>Swap</td></tr>
+          <tr><td>/dev/nvme0n1p3</td><td>Remainder</td><td>Linux filesystem</td><td>/</td><td>Root</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+<pre><code>lsblk
+gdisk /dev/nvme0n1
+
+<span class="cm"># Inside gdisk:</span>
+Command: o    <span class="cm"># new GPT partition table</span>
+Proceed? y
+
+<span class="cm"># EFI partition</span>
+Command: n
+Partition number: 1
+Last sector: +512M
+Hex code: EF00
+
+<span class="cm"># Swap partition</span>
+Command: n
+Partition number: 2
+Last sector: +4G
+Hex code: 8200
+
+<span class="cm"># Root partition</span>
+Command: n
+Partition number: 3
+Last sector: (default — uses all remaining space)
+Hex code: 8300
+
+Command: w    <span class="cm"># write and exit</span>
+Confirm? y</code></pre>
+
+      <h2 id="format" data-n="4">Format &amp; Mount</h2>
+
+<pre><code><span class="cm"># EFI — must be FAT32</span>
+mkfs.fat -F32 /dev/nvme0n1p1
+
+<span class="cm"># Swap</span>
+mkswap /dev/nvme0n1p2
+swapon /dev/nvme0n1p2
+
+<span class="cm"># Root — ext4 (reliable, battle-tested)</span>
+mkfs.ext4 /dev/nvme0n1p3
+<span class="cm"># Alternative: btrfs for CoW snapshots</span>
+<span class="cm"># mkfs.btrfs /dev/nvme0n1p3</span>
+
+<span class="cm"># Mount</span>
+mount /dev/nvme0n1p3 /mnt
+mkdir -p /mnt/boot/efi
+mount /dev/nvme0n1p1 /mnt/boot/efi</code></pre>
+
+      <div class="callout">
+        <strong>Why ext4?</strong> For a development server, ext4 is boring and correct. 20+ years of kernel hardening, zero surprises. Use btrfs if you specifically want CoW snapshots.
+      </div>
+
+      <h2 id="mirrors" data-n="5">Select Fast Mirrors</h2>
+
+<pre><code>cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+
+reflector \
+  --country India,Singapore,Germany \
+  --protocol https \
+  --sort rate \
+  --latest 10 \
+  --save /etc/pacman.d/mirrorlist
+
+<span class="cm"># For old ISO — update keyrings first</span>
+pacman -S archlinux-keyring</code></pre>
+
+      <h2 id="base" data-n="6">Install Base System</h2>
+
+<pre><code>pacstrap -K /mnt \
+  base \
+  base-devel \
+  linux \
+  linux-firmware \
+  linux-headers \
+  intel-ucode \
+  networkmanager \
+  openssh \
+  git \
+  nvim \
+  man-db \
+  man-pages \
+  texinfo</code></pre>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Package</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>base</td><td>Minimal Arch userspace (bash, glibc, coreutils)</td></tr>
+          <tr><td>base-devel</td><td>Build tools: gcc, make, binutils, fakeroot, sudo</td></tr>
+          <tr><td>linux</td><td>The kernel</td></tr>
+          <tr><td>linux-firmware</td><td>Firmware blobs for WiFi, Bluetooth, etc.</td></tr>
+          <tr><td>linux-headers</td><td>Required to build DKMS kernel modules</td></tr>
+          <tr><td>intel-ucode</td><td><strong>Critical.</strong> CPU microcode updates. Prevents obscure bugs and security holes.</td></tr>
+          <tr><td>networkmanager</td><td>Network management. Main network tool.</td></tr>
+          <tr><td>openssh</td><td>Needed for SSH.</td></tr>
+          <tr><td>git</td><td>Needed for version controll and development.</td></tr>
+          <tr><td>nvim</td><td>My editor of choice. </td></tr>
+          <tr><td>man-db, man-pages, texinfo</td><td>Man pages. Never skip these.</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h2 id="chroot" data-n="7">fstab, Chroot &amp; Configure</h2>
+
+<pre><code><span class="cm"># Generate fstab (-U uses UUIDs — stable even if you add/remove drives)</span>
+genfstab -U /mnt >> /mnt/etc/fstab
+cat /mnt/etc/fstab   <span class="cm"># VERIFY THIS. A wrong fstab bricks boot.</span>
+
+<span class="cm"># Chroot into new system</span>
+arch-chroot /mnt</code></pre>
+
+      <h3>Timezone &amp; Locale</h3>
+<pre><code>ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
+hwclock --systohc
+
+vim /etc/locale.gen
+<span class="cm"># Uncomment: en_US.UTF-8 UTF-8</span>
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+echo "KEYMAP=us" > /etc/vconsole.conf</code></pre>
+
+      <h3>Hostname &amp; Hosts</h3>
+<pre><code>echo "t480-srv" > /etc/hostname
+
+cat > /etc/hosts &lt;&lt; 'EOF'
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   t480-srv.localdomain t480-srv
+EOF</code></pre>
+
+      <h3>Root Password &amp; User</h3>
+<pre><code>passwd   <span class="cm"># set root password</span>
+
+<span class="cm"># Create your user</span>
+useradd -m -G wheel,audio,video,storage,optical,network -s /bin/bash dev
+passwd dev
+
+<span class="cm"># Grant sudo access to wheel group</span>
+EDITOR=nvim visudo
+<span class="cm"># Uncomment: %wheel ALL=(ALL:ALL) ALL</span></code></pre>
+
+      <h2 id="bootloader" data-n="8">Bootloader GRUB</h2>
+
+      <div class="callout">
+          <strong>Why GRUB over systemd-boot ?</strong> <br>Because i couldn't get systemd-boot to work
+      </div>
+      <h2>Bootloader — GRUB (fallback)</h2>
+      <p>For when systemd-boot does not work:</p>
+<pre><code>pacman -S grub efibootmgr
+grub-install \
+  --target=x86_64-efi \
+  --efi-directory=/boot/efi \
+  --bootloader-id=GRUB
+grub-mkconfig -o /boot/grub/grub.cfg</code></pre>
+<a href="#reboot">Skip to if using GRUB</a>
+
+      <h2>Bootloader —systemd-boot(fallback)</h2>
+      <p>For when you can get systemd-boot to work:</p>
+<pre><code>bootctl install
+
+<span class="cm"># Get UUID of root partition</span>
+blkid /dev/nvme0n1p3
+
+cat > /boot/loader/entries/arch.conf &lt;&lt; 'EOF'
+title   Arch Linux
+linux   /vmlinuz-linux
+initrd  /intel-ucode.img
+initrd  /initramfs-linux.img
+options root=UUID=YOUR-UUID-HERE rw quiet loglevel=3
+EOF
+
+cat > /boot/loader/loader.conf &lt;&lt; 'EOF'
+default  arch.conf
+timeout  3
+console-mode max
+editor   no
+EOF</code></pre>
+
+      <p>Replace <code>YOUR-UUID-HERE</code> with the UUID from <code>blkid</code>. <code>editor no</code> disables runtime kernel parameter editing — a basic security measure.</p>
+
+      <h3>Pacman Hook for Bootloader Updates</h3>
+<pre><code>mkdir -p /etc/pacman.d/hooks
+cat > /etc/pacman.d/hooks/95-systemd-boot.hook &lt;&lt; 'EOF'
+[Trigger]
+Type = Package
+Operation = Upgrade
+Target = systemd
+
+[Action]
+Description = Gracefully upgrading systemd-boot...
+When = PostTransaction
+Exec = /usr/bin/systemctl restart systemd-boot-update.service
+EOF</code></pre>
+<br id="reboot">
+      <h3 >Enable Services &amp; Reboot</h3>
+<pre><code>systemctl enable NetworkManager
+systemctl enable sshd
+
+exit          <span class="cm"># exit chroot</span>
+umount -R /mnt
+reboot        <span class="cm"># remove USB before or during reboot</span></code></pre>
+
+      <!-- ═══════════════════════════════════════════════════ PART 2 – POST-INSTALL -->
+      <p class="part-label" style="margin-top:4rem;">// part 2</p>
+      <p class="part-heading">Post-Install System Configuration</p>
+
+      <p>Log in as your user (<code>dev</code>). The next steps harden and configure the base system.</p>
+
+      <h2 id="post-install" data-n="9">Network with NetworkManager</h2>
+
+<pre><code>ping archlinux.org   <span class="cm"># verify network is up</span>
+
+nmcli device status
+<span class="cm"># Connect to WiFi if needed:</span>
+nmcli device wifi connect "SSID" password "password"</code></pre>
+
+      <h2 id="ssh" data-n="10">SSH Hardening</h2>
+
+      <div class="callout callout-warn">
+        <strong>Set up SSH keys BEFORE disabling password auth.</strong> Lock yourself out and you'll need physical access.
+      </div>
+
+<pre><code>sudo nvim /etc/ssh/sshd_config</code></pre>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Directive</th><th>Value</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td>Port</td><td>2222</td><td>Non-standard port, reduces script kiddie noise</td></tr>
+          <tr><td>PermitRootLogin</td><td>no</td><td>Never allow root SSH login</td></tr>
+          <tr><td>PasswordAuthentication</td><td>no</td><td>Key-only auth</td></tr>
+          <tr><td>PubkeyAuthentication</td><td>yes</td><td></td></tr>
+          <tr><td>MaxAuthTries</td><td>3</td><td></td></tr>
+          <tr><td>X11Forwarding</td><td>no</td><td></td></tr>
+          <tr><td>AllowTcpForwarding</td><td>no</td><td></td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h3>Set Up SSH Keys</h3>
+<pre><code><span class="cm"># On your client machine:</span>
+ssh-keygen -t ed25519 -C "your@email.com"
+
+<span class="cm"># Copy public key to server (while password auth is still on)</span>
+ssh-copy-id -p 2222 dev@t480-srv.local
+
+<span class="cm"># Test FIRST, then disable password auth</span>
+sudo systemctl restart sshd
+ssh -p 2222 dev@t480-srv.local</code></pre>
+
+      <h2 id="firewall" data-n="11">Firewall with nftables</h2>
+
+<pre><code>sudo pacman -S nftables
+sudo nvim /etc/nftables.conf</code></pre>
+
+<pre><code>#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+  chain input {
+    type filter hook input priority filter; policy drop;
+
+    ct state established,related accept
+    iif "lo" accept
+    ip protocol icmp accept
+    ip6 nexthdr icmpv6 accept
+
+    <span class="cm"># Allow SSH on custom port</span>
+    tcp dport 2222 accept
+
+    log prefix "nft-drop: " drop
+  }
+  chain forward {
+    type filter hook forward priority filter; policy drop;
+  }
+  chain output {
+    type filter hook output priority filter; policy accept;
+  }
+}</code></pre>
+
+<pre><code>sudo systemctl enable --now nftables
+sudo nft list ruleset   <span class="cm"># verify</span></code></pre>
+
+      <h2 id="aur" data-n="12">AUR Helper — paru</h2>
+
+      <p><code>paru</code> is a modern, Rust-written AUR helper. From now on, use <code>paru</code> instead of <code>pacman</code> for everything — it handles both official repos and AUR transparently.</p>
+
+<pre><code>git clone https://aur.archlinux.org/paru.git /tmp/paru
+cd /tmp/paru
+makepkg -si
+cd -</code></pre>
+
+      <h3>pacman Configuration</h3>
+<pre><code>sudo nvim /etc/pacman.conf
+
+<span class="cm"># Uncomment/add:</span>
+Color
+ILoveCandy
+ParallelDownloads = 5
+
+[multilib]
+Include = /etc/pacman.d/mirrorlist
+
+sudo pacman -Syyu</code></pre>
+
+      <!-- ═══════════════════════════════════════════════════ PART 3 – DEV TOOLCHAIN -->
+      <p class="part-label" style="margin-top:4rem;">// part 3</p>
+      <p class="part-heading">Developer Toolchain</p>
+
+      <h2 id="shell" data-n="13">Shell — zsh + plugins</h2>
+
+<pre><code>paru -S zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting starship
+chsh -s /usr/bin/zsh</code></pre>
+
+      <h3>~/.zshrc</h3>
+<pre><code><span class="cm"># History</span>
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zsh_history
+setopt HIST_IGNORE_DUPS
+setopt SHARE_HISTORY
+
+<span class="cm"># Completion</span>
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select
+
+<span class="cm"># Plugins</span>
+source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+<span class="cm"># Starship prompt</span>
+eval "$(starship init zsh)"
+
+<span class="cm"># Aliases</span>
+alias ls='ls --color=auto'
+alias ll='ls -alh'
+alias la='ls -A'
+alias grep='grep --color=auto'
+alias diff='diff --color=auto'
+alias ip='ip --color=auto'
+alias ..='cd ..'
+alias ...='cd ../..'
+
+<span class="cm"># Exports</span>
+export EDITOR=nvim
+export VISUAL=nvim
+export PAGER=less
+export LESS='-R --use-color'
+export PATH="$HOME/.local/bin:$PATH"</code></pre>
+
+      <div class="callout">
+        <strong>Why zsh?</strong> Fish is prettier but non-POSIX. Bash is universal but ergonomically dated. Zsh is POSIX-compatible, has a massive plugin ecosystem.<br><br>
+        <strong>Why starship?</strong> Cross-shell, written in Rust, zero config needed to look great, shows git status, language versions, and exit codes at a glance.
+      </div>
+
+      <h2 id="tmux" data-n="14">tmux — Terminal Multiplexer</h2>
+
+      <div class="callout">
+        <strong>Why tmux?</strong> On a server you SSH into, tmux is essential. Sessions persist when your SSH connection drops. Detach, walk away, come back, <code>tmux attach</code> to pick up exactly where you left.
+      </div>
+
+<pre><code>paru -S tmux</code></pre>
+
+      <h3>~/.tmux.conf</h3>
+<pre><code><span class="cm"># Change prefix Ctrl+B → Ctrl+A (screen-style)</span>
+unbind C-b
+set-option -g prefix C-a
+bind-key C-a send-prefix
+
+<span class="cm"># Reload config</span>
+bind r source-file ~/.tmux.conf \; display "Config reloaded!"
+
+<span class="cm"># Split panes</span>
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+unbind '"'
+unbind %
+
+<span class="cm"># Navigate panes with Alt+Arrow (no prefix)</span>
+bind -n M-Left  select-pane -L
+bind -n M-Right select-pane -R
+bind -n M-Up    select-pane -U
+bind -n M-Down  select-pane -D
+
+<span class="cm"># Mouse support</span>
+set -g mouse on
+
+<span class="cm"># Start windows at 1, not 0</span>
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+
+<span class="cm"># Scrollback</span>
+set -g history-limit 50000
+
+<span class="cm"># Status bar (catppuccin mocha colors)</span>
+set -g status-position bottom
+set -g status-style 'bg=#1e1e2e fg=#cdd6f4'
+set -g status-left '#[fg=#89b4fa,bold] #S '
+set -g status-right '#[fg=#a6e3a1] %Y-%m-%d %H:%M '
+set -g window-status-current-style 'fg=#f38ba8,bold'
+
+<span class="cm"># 256 color support</span>
+set -g default-terminal "tmux-256color"
+set -ag terminal-overrides ",xterm-256color:RGB"
+
+<span class="cm"># Activity monitoring</span>
+setw -g monitor-activity on
+set -g visual-activity off</code></pre>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Key</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>C-a d</kbd></td><td>detach (session keeps running)</td></tr>
+          <tr><td><kbd>C-a c</kbd></td><td>new window</td></tr>
+          <tr><td><kbd>C-a ,</kbd></td><td>rename window</td></tr>
+          <tr><td><kbd>C-a |</kbd></td><td>split vertical</td></tr>
+          <tr><td><kbd>C-a -</kbd></td><td>split horizontal</td></tr>
+          <tr><td><kbd>C-a [</kbd></td><td>scroll mode (q to exit)</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h2 id="nvim" data-n="15">Neovim — Editor</h2>
+
+<pre><code>paru -S neovim python-pynvim nodejs npm ripgrep fd fzf lazygit</code></pre>
+
+      <h3>Config Structure</h3>
+<pre><code>~/.config/nvim/
+├── init.lua
+└── lua/
+    ├── options.lua
+    ├── keymaps.lua
+    ├── autocmds.lua
+    └── plugins/
+        ├── init.lua      <span class="cm"># lazy.nvim bootstrap</span>
+        ├── lsp.lua
+        ├── telescope.lua
+        ├── treesitter.lua
+        └── ui.lua</code></pre>
+
+      <h3>init.lua</h3>
+<pre><code>require("options")
+require("keymaps")
+require("autocmds")
+require("plugins")</code></pre>
+
+      <h3>lua/options.lua</h3>
+<pre><code><span class="kw">local</span> opt = nvim.opt
+
+opt.number = <span class="kw">true</span>
+opt.relativenumber = <span class="kw">true</span>
+opt.tabstop = <span class="nu">4</span>
+opt.shiftwidth = <span class="nu">4</span>
+opt.expandtab = <span class="kw">true</span>
+opt.smartindent = <span class="kw">true</span>
+opt.ignorecase = <span class="kw">true</span>
+opt.smartcase = <span class="kw">true</span>
+opt.termguicolors = <span class="kw">true</span>
+opt.signcolumn = <span class="st">"yes"</span>
+opt.cursorline = <span class="kw">true</span>
+opt.scrolloff = <span class="nu">8</span>
+opt.wrap = <span class="kw">false</span>
+opt.colorcolumn = <span class="st">"100"</span>
+opt.undofile = <span class="kw">true</span>    <span class="cm">-- persistent undo (survives nvim restart)</span>
+opt.swapfile = <span class="kw">false</span>
+opt.updatetime = <span class="nu">250</span>
+opt.clipboard = <span class="st">"unnamedplus"</span></code></pre>
+
+      <h3>lua/keymaps.lua (selected)</h3>
+<pre><code><span class="kw">local</span> map = nvim.keymap.set
+vim.g.mapleader = <span class="st">" "</span>
+
+<span class="cm">-- File operations</span>
+map(<span class="st">"n"</span>, <span class="st">"&lt;leader&gt;w"</span>, <span class="st">"&lt;cmd&gt;write&lt;cr&gt;"</span>,       { desc = <span class="st">"Save file"</span> })
+map(<span class="st">"n"</span>, <span class="st">"&lt;leader&gt;e"</span>, <span class="st">"&lt;cmd&gt;Neotree toggle&lt;cr&gt;"</span>, { desc = <span class="st">"File tree"</span> })
+
+<span class="cm">-- Telescope</span>
+map(<span class="st">"n"</span>, <span class="st">"&lt;leader&gt;ff"</span>, <span class="st">"&lt;cmd&gt;Telescope find_files&lt;cr&gt;"</span>, { desc = <span class="st">"Find files"</span> })
+map(<span class="st">"n"</span>, <span class="st">"&lt;leader&gt;fg"</span>, <span class="st">"&lt;cmd&gt;Telescope live_grep&lt;cr&gt;"</span>,  { desc = <span class="st">"Grep project"</span> })
+
+<span class="cm">-- LSP</span>
+map(<span class="st">"n"</span>, <span class="st">"gd"</span>, nvim.lsp.buf.definition, { desc = <span class="st">"Go to definition"</span> })
+map(<span class="st">"n"</span>, <span class="st">"K"</span>,  nvim.lsp.buf.hover,       { desc = <span class="st">"Hover docs"</span> })
+map(<span class="st">"n"</span>, <span class="st">"&lt;leader&gt;rn"</span>, nvim.lsp.buf.rename, { desc = <span class="st">"Rename"</span> })
+
+<span class="cm">-- Lazygit</span>
+map(<span class="st">"n"</span>, <span class="st">"&lt;leader&gt;gg"</span>, <span class="st">"&lt;cmd&gt;terminal lazygit&lt;cr&gt;i"</span>, { desc = <span class="st">"LazyGit"</span> })</code></pre>
+
+      <h3>LSP Servers (mason)</h3>
+<pre><code>require(<span class="st">"mason-lspconfig"</span>).setup({
+  ensure_installed = {
+    <span class="st">"lua_ls"</span>, <span class="st">"pyright"</span>, <span class="st">"ts_ls"</span>,
+    <span class="st">"bashls"</span>, <span class="st">"dockerls"</span>, <span class="st">"yamlls"</span>,
+  },
+})</code></pre>
+
+      <h2 id="languages" data-n="16">Development Languages &amp; Runtimes</h2>
+
+<pre><code><span class="cm"># Python (uv — Rust-based, dramatically faster than pip)</span>
+paru -S python python-pip python-virtualenv uv
+
+<span class="cm"># Node.js (nvm for version management)</span>
+paru -S nvm
+<span class="cm"># Add to .zshrc: source /usr/share/nvm/init-nvm.sh</span>
+nvm install --lts && nvm use --lts
+
+<span class="cm"># Go</span>
+paru -S go
+
+<span class="cm"># Rust (official way — do not use pacman for rustup)</span>
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+
+<span class="cm"># Docker</span>
+paru -S docker docker-compose
+sudo systemctl enable --now docker
+sudo usermod -aG docker dev
+
+<span class="cm"># Modern CLI tools</span>
+paru -S bat eza zoxide git-delta btop tldr jq yq httpie ncdu duf direnv</code></pre>
+
+      <h2 id="git" data-n="17">Git Configuration</h2>
+
+<pre><code>git config --global user.name  "Your Name"
+git config --global user.email "you@example.com"
+git config --global core.editor nvim
+git config --global init.defaultBranch main
+git config --global pull.rebase true
+git config --global core.pager delta
+
+<span class="cm"># delta (beautiful diffs)</span>
+git config --global delta.navigate true
+git config --global delta.side-by-side true
+
+<span class="cm"># Aliases</span>
+git config --global alias.lg  "log --oneline --graph --decorate --all"
+git config --global alias.st  status
+git config --global alias.co  checkout
+git config --global alias.undo "reset HEAD~1 --mixed"</code></pre>
+
+      <h3>SSH Keys for GitHub</h3>
+<pre><code>ssh-keygen -t ed25519 -C "you@example.com" -f ~/.ssh/github
+
+cat >> ~/.ssh/config &lt;&lt; 'EOF'
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/github
+  AddKeysToAgent yes
+EOF
+chmod 600 ~/.ssh/config
+
+cat ~/.ssh/github.pub  <span class="cm"># paste into GitHub → Settings → SSH Keys</span>
+ssh -T git@github.com  <span class="cm"># verify</span></code></pre>
+<a>
+Add to .zshrc to autoload agent
+</a>
+<code><pre>
+# Start ssh-agent only if not running
+# Ensure SSH agent is running and connected
+if [ -z "$SSH_AUTH_SOCK" ]; then
+  eval "$(ssh-agent -s)" > /dev/null 2>&1
+fi
+
+# Add key if not already added
+if ! ssh-add -l 2>/dev/null | grep -q "$(ssh-keygen -lf ~/.ssh/github.pub | awk '{print $2}')"; then
+  ssh-add ~/.ssh/github > /dev/null
+fi
+</code></pre>
+
+
+
+
+
+      <h2 id="services" data-n="18">Development Services</h2>
+
+<pre><code><span class="cm"># Redis</span>
+paru -S redis
+sudo systemctl enable --now redis
+
+<span class="cm"># Nginx / Caddy (reverse proxy)</span>
+paru -S nginx        <span class="cm"># or caddy for automatic HTTPS</span>
+sudo systemctl enable --now nginx</code></pre>
+
+      <!-- ═══════════════════════════════════════════════════ PART 4 – HARDENING -->
+      <p class="part-label" style="margin-top:4rem;">// part 4</p>
+      <p class="part-heading">Server Hardening &amp; Maintenance</p>
+
+      <h2 id="hardening" data-n="19">Hardening</h2>
+
+      <div class="callout callout-warn">
+        <strong>Do not auto-update blindly on Arch</strong> — it's a rolling release and major updates can break things. Get notified instead.
+      </div>
+
+      <h3>Security Audit</h3>
+<pre><code>paru -S arch-audit
+arch-audit   <span class="cm"># check for vulnerable packages</span>
+
+<span class="cm"># Auto-clean old package cache</span>
+paru -S pacman-contrib
+sudo systemctl enable --now paccache.timer</code></pre>
+
+      <h3>fail2ban</h3>
+<pre><code>paru -S fail2ban
+
+sudo cat > /etc/fail2ban/jail.local &lt;&lt; 'EOF'
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 3
+
+[sshd]
+enabled = true
+port    = 2222
+EOF
+
+sudo systemctl enable --now fail2ban
+sudo fail2ban-client status sshd</code></pre>
+
+      <h3>Wake-on-LAN</h3>
+<pre><code><span class="cm"># Enable WoL (persisted via systemd service)</span>
+sudo cat > /etc/systemd/system/wol.service &lt;&lt; 'EOF'
+[Unit]
+Description=Enable Wake-on-LAN
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/ethtool -s enp0s31f6 wol g
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl enable --now wol.service
+
+<span class="cm"># From any machine on the network:</span>
+wakeonlan AA:BB:CC:DD:EE:FF</code></pre>
+
+      <h3>Auto-attach tmux on SSH</h3>
+<pre><code><span class="cm"># Add to ~/.zshrc:</span>
+if [[ -n "$SSH_CONNECTION" ]] && command -v tmux &>/dev/null; then
+  [[ -z "$TMUX" ]] && exec tmux new-session -A -s main
+fi</code></pre>
+
+      <!-- ═══════════════════════════════════════════════════ PART 5 – DOTFILES -->
+      <p class="part-label" style="margin-top:4rem;">// part 5</p>
+      <p class="part-heading">Dotfiles Management with Git</p>
+
+      <h2 id="dotfiles" data-n="20">The Bare Repository Method</h2>
+
+      <p>The cleanest approach — no symlinks, no extra tools. A bare git repository that tracks your home directory directly.</p>
+
+<pre><code><span class="cm"># Create the bare repo</span>
+git init --bare ~/.dotfiles
+
+<span class="cm"># Create the alias (add to .zshrc IMMEDIATELY)</span>
+alias dot='git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+
+<span class="cm"># Don't show untracked files (home dir has thousands)</span>
+dot config --local status.showUntrackedFiles no
+
+<span class="cm"># Set your remote</span>
+dot remote add origin git@github.com:Manav-madhu/dotfiles.git</code></pre>
+
+      <p>The <code>dot</code> alias is just git pointed at a bare repo in <code>~/.dotfiles</code> with the working tree set to <code>$HOME</code>. Track any file in your home directory without moving it.</p>
+
+      <h3>Track Config Files</h3>
+<pre><code>dot add ~/.zshrc
+dot add ~/.tmux.conf
+dot add ~/.gitconfig
+dot add ~/.ssh/config
+dot add ~/.config/nvim/init.lua
+dot add ~/.config/nvim/lua/options.lua
+dot add ~/.config/nvim/lua/keymaps.lua
+dot add ~/.config/nvim/lua/plugins/init.lua
+dot add ~/.config/starship.toml
+
+dot commit -m "feat: initial dotfiles setup"
+dot push -u origin main</code></pre>
+
+      <h3>Repo Structure</h3>
+<pre><code>dotfiles (bare repo, visualized)
+├── .zshrc
+├── .tmux.conf
+├── .gitconfig
+├── .ssh/
+│   └── config
+├── .config/
+│   ├── nvim/
+│   │   ├── init.lua
+│   │   └── lua/
+│   │       ├── options.lua
+│   │       ├── keymaps.lua
+│   │       ├── autocmds.lua
+│   │       └── plugins/
+│   └── starship.toml
+└── .local/
+    └── bin/          <span class="cm"># personal scripts</span></code></pre>
+
+      <h3>Daily Workflow</h3>
+<pre><code>dot status          <span class="cm"># check tracked files</span>
+dot diff            <span class="cm"># see what changed</span>
+dot add ~/.zshrc    <span class="cm"># track a new/changed file</span>
+dot commit -m "feat: add X to zshrc"
+dot push
+dot pull            <span class="cm"># sync on another machine</span></code></pre>
+
+      <p>Useful aliases to add to <code>.zshrc</code>:</p>
+<pre><code>alias dot='git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+alias dots='dot status'
+alias dotd='dot diff'
+alias dotl='dot log --oneline -20'
+alias dotp='dot push'</code></pre>
+
+      <!-- ═══════════════════════════════════════════════════ BOOTSTRAP -->
+      <h2 id="bootstrap" data-n="21">Bootstrap Script</h2>
+
+      <p>Restores your entire environment on a fresh Arch install. Save as <code>~/.local/bin/bootstrap.sh</code> and track it in dotfiles.</p>
+
+    <h4> !! change dotfile repo variable !!</h4>
+<pre><code>#!/usr/bin/env bash
+# bootstrap.sh — Full system setup from dotfiles
+set -euo pipefail
+
+echo "==> Starting bootstrap..."
+
+<span class="cm"># Install paru if not present</span>
+if ! command -v paru &>/dev/null; then
+  git clone https://aur.archlinux.org/paru.git /tmp/paru
+  cd /tmp/paru && makepkg -si --noconfirm && cd -
+fi
+
+PACKAGES=(
+  zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting starship
+  tmux
+  neovim python-pynvim nodejs npm ripgrep fd fzf lazygit
+  bat eza zoxide git-delta btop tldr jq yq httpie ncdu duf direnv
+  python python-pip uv go rustup
+  docker docker-compose postgresql redis nginx
+  fail2ban nftables avahi nss-mdns networkmanager
+)
+paru -S --needed --noconfirm "${PACKAGES[@]}"
+
+<span class="cm"># Restore dotfiles</span>
+DOTFILES_REPO="git@github.com:Manav-madhu/dotfiles.git"
+if [ ! -d "$HOME/.dotfiles" ]; then
+  git clone --bare "$DOTFILES_REPO" "$HOME/.dotfiles"
+fi
+alias dot='git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+dot checkout
+dot config --local status.showUntrackedFiles no
+
+<span class="cm"># Set default shell</span>
+chsh -s /usr/bin/zsh
+
+<span class="cm"># Enable services</span>
+sudo systemctl enable --now NetworkManager sshd nftables fail2ban docker avahi-daemon
+sudo usermod -aG docker "$USER"
+
+echo ""
+echo "==> Bootstrap complete!"
+echo "  1. Re-login for group changes (docker)"
+echo "  2. Open nvim and run :Lazy"
+echo "  3. Open tmux and press prefix+I"
+echo "  4. Set up SSH keys for GitHub"</code></pre>
+
+<pre><code>chmod +x ~/.local/bin/bootstrap.sh
+dot add ~/.local/bin/bootstrap.sh
+dot commit -m "feat: add bootstrap script"
+dot push</code></pre>
+
+      <!-- ═══════════════════════════════════════════════════ PART 6 – QUICK REF -->
+      <p class="part-label" style="margin-top:4rem;">// part 6</p>
+      <p class="part-heading">Quick Reference</p>
+
+      <h2 id="quickref" data-n="22">Essential Commands</h2>
+
+      <h3>System</h3>
+<pre><code>sudo pacman -Syu            <span class="cm"># full system update</span>
+paru -S &lt;pkg&gt;               <span class="cm"># install from repos or AUR</span>
+paru -Rns &lt;pkg&gt;             <span class="cm"># remove package and orphan deps</span>
+paru -Qs &lt;pkg&gt;              <span class="cm"># search installed packages</span>
+paccache -r                 <span class="cm"># clean cache (keep last 3 versions)</span>
+journalctl -u &lt;svc&gt; -f     <span class="cm"># follow service logs</span>
+journalctl -p err -b        <span class="cm"># all errors since last boot</span></code></pre>
+
+      <h3>Maintenance Schedule</h3>
+
+      <div class="table-wrap">
+      <table class="maint">
+        <thead><tr><th>Frequency</th><th>Task</th></tr></thead>
+        <tbody>
+          <tr><td>Weekly</td><td><code>sudo pacman -Syu</code> — update system</td></tr>
+          <tr><td>Weekly</td><td><code>paccache -r</code> — clean package cache</td></tr>
+          <tr><td>Monthly</td><td><code>paru -Qdtq | paru -Rns -</code> — remove orphaned packages</td></tr>
+          <tr><td>Monthly</td><td>Review <code>journalctl -p err -b</code> — check for errors</td></tr>
+          <tr><td>Monthly</td><td><code>dot pull &amp;&amp; dot status</code> — sync dotfiles</td></tr>
+          <tr><td>On change</td><td><code>dot add</code>, <code>dot commit</code>, <code>dot push</code> — save config changes</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h3>Neovim Quick Reference</h3>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Key</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Space</kbd><kbd>ff</kbd></td><td>find files (Telescope)</td></tr>
+          <tr><td><kbd>Space</kbd><kbd>fg</kbd></td><td>grep project</td></tr>
+          <tr><td><kbd>Space</kbd><kbd>e</kbd></td><td>file tree (Neo-tree)</td></tr>
+          <tr><td><kbd>Space</kbd><kbd>gg</kbd></td><td>LazyGit</td></tr>
+          <tr><td><kbd>gd</kbd></td><td>go to definition</td></tr>
+          <tr><td><kbd>K</kbd></td><td>hover docs</td></tr>
+          <tr><td><kbd>Space</kbd><kbd>rn</kbd></td><td>rename symbol</td></tr>
+          <tr><td><kbd>[d</kbd> / <kbd>]d</kbd></td><td>prev / next diagnostic</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <blockquote>
+        <p> "system should just work" philosophy.<br>
+        The best system is the one you understand completely.</p>
+      </blockquote>
+
+    </article>
+
+    <div class="post-nav">
+      <div><!-- no previous post --></div>
+      <div style="text-align: right;">
+        <a href="/posts/dwm.html">
+          <span class="nav-label">Next to</span>
+          Setup desktop →
+        </a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2025 terminal notes</span>
+    <span>plain html · no js · no trackers</span>
+  </div>
+</footer>
+
+</body>
+</html>
