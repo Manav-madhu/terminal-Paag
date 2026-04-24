@@ -12,10 +12,10 @@
 
 <header>
   <div class="inner">
-    <a href="#" class="site-name"><span>~/</span>&nbsp;terminal notes</a>
+    <a href="/index.html" class="site-name"><span>~/</span>&nbsp;terminal notes</a>
     <nav>
-      <a href="#">posts</a>
-      <a href="#">about</a>
+      <a href="/index.html">posts</a>
+      <a href="/index.html">about</a>
       <a href="https://github.com/Manav-madhu" target="_blank">github</a>
     </nav>
   </div>
@@ -192,18 +192,21 @@ Proceed? y
 <span class="cm"># EFI partition</span>
 Command: n
 Partition number: 1
+First secrtor: (default - enter)
 Last sector: +512M
 Hex code: EF00
 
 <span class="cm"># Swap partition</span>
 Command: n
 Partition number: 2
+First secrtor: (default - enter)
 Last sector: +4G
 Hex code: 8200
 
 <span class="cm"># Root partition</span>
 Command: n
 Partition number: 3
+First secrtor: (default - enter)
 Last sector: (default — uses all remaining space)
 Hex code: 8300
 
@@ -259,7 +262,7 @@ pacman -S archlinux-keyring</code></pre>
   networkmanager \
   openssh \
   git \
-  nvim \
+  neovim \
   man-db \
   man-pages \
   texinfo</code></pre>
@@ -296,7 +299,7 @@ arch-chroot /mnt</code></pre>
 <pre><code>ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
 hwclock --systohc
 
-vim /etc/locale.gen
+nvim /etc/locale.gen
 <span class="cm"># Uncomment: en_US.UTF-8 UTF-8</span>
 locale-gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
@@ -327,7 +330,7 @@ EDITOR=nvim visudo
       <div class="callout">
           <strong>Why GRUB over systemd-boot ?</strong> <br>Because i couldn't get systemd-boot to work
       </div>
-      <h2>Bootloader — GRUB (fallback)</h2>
+      <h2>Bootloader — GRUB</h2>
       <p>For when systemd-boot does not work:</p>
 <pre><code>pacman -S grub efibootmgr
 grub-install \
@@ -335,9 +338,9 @@ grub-install \
   --efi-directory=/boot/efi \
   --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg</code></pre>
-<a href="#reboot">Skip to if using GRUB</a>
+<a href="#reboot">Skip to reboot if using GRUB</a>
 
-      <h2>Bootloader —systemd-boot(fallback)</h2>
+      <h2>Bootloader —systemd-boot (fallback)</h2>
       <p>For when you can get systemd-boot to work:</p>
 <pre><code>bootctl install
 
@@ -479,7 +482,6 @@ cd -</code></pre>
 
 <span class="cm"># Uncomment/add:</span>
 Color
-ILoveCandy
 ParallelDownloads = 5
 
 [multilib]
