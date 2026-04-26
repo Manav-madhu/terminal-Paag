@@ -39,7 +39,7 @@
       <blockquote>
         <p>This is a living document. Everything below is copy-paste ready and
         tested on a fresh Arch install. No fluff — only what I actually run.
-        A fresh install should reach full working state in under 30 minutes via the bootstrap script.</p>
+        A fresh install should reach full working state in under 30 minutes .</p>
       </blockquote>
 
       <!-- Philosophy -->
@@ -499,6 +499,7 @@ sudo pacman -Syyu</code></pre>
 chsh -s /usr/bin/zsh</code></pre>
 
       <h3>~/.zshrc</h3>
+      <a href="https://GitHub.com/Manav-madhu/dotfiles">All config files are available in github</a>
 <pre><code><span class="cm"># History</span>
 HISTSIZE=10000
 SAVEHIST=10000
@@ -806,6 +807,7 @@ sudo systemctl enable --now fail2ban
 sudo fail2ban-client status sshd</code></pre>
 
       <h3>Wake-on-LAN</h3>
+      <a>NOT YET TESTED</a>
 <pre><code><span class="cm"># Enable WoL (persisted via systemd service)</span>
 sudo cat > /etc/systemd/system/wol.service &lt;&lt; 'EOF'
 [Unit]
@@ -902,6 +904,7 @@ alias dotp='dot push'</code></pre>
 
       <!-- ═══════════════════════════════════════════════════ BOOTSTRAP -->
       <h2 id="bootstrap" data-n="21">Bootstrap Script</h2>
+      <a>THIS IS A AI Generated script use at your own risk!!!</a>
 
       <p>Restores your entire environment on a fresh Arch install. Save as <code>~/.local/bin/bootstrap.sh</code> and track it in dotfiles.</p>
 
@@ -1016,7 +1019,7 @@ journalctl -p err -b        <span class="cm"># all errors since last boot</span>
     <div class="post-nav">
       <div><!-- no previous post --></div>
       <div style="text-align: right;">
-        <a href="/posts/dwm.html">
+        <a href="/posts/dwm-setup.html">
           <span class="nav-label">Next to</span>
           Setup desktop →
         </a>

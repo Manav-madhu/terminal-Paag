@@ -123,6 +123,7 @@ cd dmenu && sudo make clean install</code></pre>
         </thead>
         <tbody>
           <tr><td>autostart</td><td>run <code>~/.dwm/autostart.sh</code> on launch</td></tr>
+          <tr><td>backlight</td><td>Controll screen brightness using brightnessctl</td></tr>
           <tr><td>pertag</td><td>independent layout per tag</td></tr>
           <tr><td>vanitygaps</td><td>inner/outer gaps for visual breathing room</td></tr>
           <tr><td>fullscreen</td><td>true fullscreen toggle (no bar)</td></tr>
@@ -155,6 +156,7 @@ patch -p1 < dwm-autostart-20210120-cb3f58a.diff
 
       <!-- ── 4 DWM CONFIG ─────────────────────────────── -->
       <h2 id="dwm-config">4. dwm config.h</h2>
+      <a href="https://github.com/Manav-madhu/dotfiles">Use config from github which will be the most uptodate</a>
 
       <p>
         Gruvbox dark palette throughout. <kbd>Super</kbd> as modifier.
@@ -237,7 +239,7 @@ mkdir -p ~/.config/zsh/plugins</code></pre>
 
       <h3>~/.zshenv</h3>
 
-<pre><code><span class="kw">export</span> ZDOTDIR=<span class="st">"$HOME/.config/zsh"</span>
+<pre><code>
 <span class="kw">export</span> PATH=<span class="st">"$HOME/.local/bin:$PATH"</span>
 <span class="kw">export</span> EDITOR=nvim
 <span class="kw">export</span> VISUAL=nvim
@@ -246,14 +248,15 @@ mkdir -p ~/.config/zsh/plugins</code></pre>
 <span class="kw">export</span> FZF_DEFAULT_COMMAND=<span class="st">'fd --type f --hidden --follow --exclude .git'</span>
 <span class="kw">export</span> FZF_DEFAULT_OPTS=<span class="st">'--height 40% --layout=reverse --border'</span></code></pre>
 
-      <h3>~/.config/zsh/.zshrc (essentials)</h3>
+      <h3>~/.zshrc (essentials)</h3>
 
 <pre><code><span class="cm"># history</span>
-HISTSIZE=<span class="nu">50000</span>; SAVEHIST=<span class="nu">50000</span>; HISTFILE=<span class="st">"$ZDOTDIR/.zsh_history"</span>
+HISTSIZE=<span class="nu">50000</span>; SAVEHIST=<span class="nu">50000</span>; HISTFILE=<span class="st">"~/.zsh_history"</span>
 <span class="kw">setopt</span> HIST_IGNORE_DUPS HIST_IGNORE_SPACE SHARE_HISTORY
 
 <span class="cm"># completion</span>
-<span class="kw">autoload</span> -Uz compinit && compinit -d <span class="st">"$ZDOTDIR/.zcompdump"</span>
+<span class="kw">autoload</span> -Uz compinit && compinit </span>
+<span class="cm"># use -d to specify .zcompdump file</span>
 <span class="kw">zstyle</span> <span class="st">':completion:*'</span> menu select
 
 <span class="cm"># vi mode</span>
@@ -261,6 +264,8 @@ HISTSIZE=<span class="nu">50000</span>; SAVEHIST=<span class="nu">50000</span>; 
 <span class="kw">export</span> KEYTIMEOUT=<span class="nu">1</span>
 <span class="kw">bindkey</span> <span class="st">'^R'</span> history-incremental-search-backward
 
+
+<span class="cm"># new github conf uses starship as prmpt</span>
 <span class="cm"># prompt (no external deps)</span>
 <span class="kw">autoload</span> -Uz vcs_info
 <span class="fn">precmd</span>() { vcs_info }
@@ -269,17 +274,18 @@ HISTSIZE=<span class="nu">50000</span>; SAVEHIST=<span class="nu">50000</span>; 
 <span class="kw">PROMPT</span>=<span class="st">'%F{yellow}%~%F{blue}${vcs_info_msg_0_}%f %(?.%F{green}.%F{red})❯%f '</span>
 
 <span class="cm"># plugins</span>
-<span class="fn">source</span> <span class="st">"$ZDOTDIR/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"</span>
-<span class="fn">source</span> <span class="st">"$ZDOTDIR/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"</span>
+<span class="fn">source</span> <span class="st">"/usr/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"</span>
+<span class="fn">source</span> <span class="st">"/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"</span>
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
 <span class="cm"># fzf</span>
 <span class="fn">source</span> /usr/share/fzf/key-bindings.zsh
 <span class="fn">source</span> /usr/share/fzf/completion.zsh
 
-<span class="fn">source</span> <span class="st">"$ZDOTDIR/aliases.zsh"</span></code></pre>
+<span class="fn">source</span> <span class="st">"/.aliases.zsh"</span></code></pre>
 
       <h3>Clone plugins</h3>
+      <a>download from repo instead of cloneing</a>
 
 <pre><code>git clone https://github.com/zdharma-continuum/fast-syntax-highlighting \
   ~/.config/zsh/plugins/fast-syntax-highlighting
