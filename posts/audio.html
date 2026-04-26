@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A high-performance, keyboard-driven Arch Linux dev environment — WM selection, launcher, hardened Firefox, core tools, UX, dotfile philosophy.">
+  <title>Set up Audio on Arch Linux · ~/</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <a href="../index.html" class="site-name"><span>~/</span>&nbsp;terminal notes</a>
+    <nav>
+      <a href="../index.html">posts</a>
+      <a href="../about.html">about</a>
+      <a href="https://github.com/Manav-madhu" target="_blank">github</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="post-header">
+      <p class="post-tag">// arch · tiling · systems</p>
+      <h1>Setting up Audio on a <a href="/post/arch_server.html">fresh install</a> of<br>Arch Linux</h1>
+      <div class="post-byline">
+        <span>2026-04-23</span>
+        <span>14 min read</span>
+        <span>ThinkPad T480 · Arch Linux</span>
+      </div>
+    </div>
+
+    <article class="body">
+
+      <blockquote>
+          this is one of those things that feels <a>unnecessarily hard</a> the first time you hit it.
+      </blockquote>
+
+      <div class="toc">
+        <p class="toc-title">// contents</p>
+        <ol>
+          <li><a href="#plem">The problem</a></li>
+          <li><a href="#vfy">Verify</a></li>
+          <li><a href="#inst">Install</a></li>
+          <li><a href="#mixer">Mixer</a></li>
+          <li><a href="#limit">Limitations</a></li>
+          <li><a href="#tshoot">Troubleshoot</a></li>
+        </ol>
+      </div>
+
+      <!-- ── 1 WINDOW MANAGER ──────────────────────────── -->
+      <h2 id="plem">1. The Problem</h2>
+
+      <h3>arch gives you  — <code><bold>nothing</bold></code></h3>
+
+      <p>
+      A minimal arch install does exactly what you asked:<br>
+      &nbsp;it installs a system, not a <bold>user experience</bold>.
+        audio is not “missing” — it’s just not configured.
+        under the hood, linux audio is layered. <br><br>
+        <h3>ALSA → talks directly to your hardware</h3>
+* **pulseaudio / pipewire** → optional sound servers on top
+
+by default, you often only have kernel-level support, but no tooling or configuration. ()
+      </p>
+
+      <!-- ── 2 ──────────────────────────────────── -->
+      <h2 id="vfy">2. Verify</h2>
+
+      <h3>before installing anything, verify hardware is detected</h3>
+
+<pre><code>arecord -l</code></pre>
+
+<p>if you see something like:<br>
+
+      <code>
+          card 0: PCH [HDA Intel PCH], device 0: ...
+      </code>
+      <br>
+good. your kernel sees the device.
+<br><br>
+if you see:
+<br>
+
+      <code>
+        no soundcards found ...
+      </code>
+      <br>
+then stop—this is a driver/firmware issue, not an audio stack problem.
+try installing <code>paru -S alsa-ucm-conf sof-firmware</code>
+</p>
+<h2 id="inst">3. Install</h2>
+<p>if you want the *true minimal route* (no sound server), start with ALSA:</p>
+
+    <pre><code><span class="inst"># install alsa-utils</span>
+paru -S alsa-utils
+    </code></pre>
+      <h2 id="mixer">4. volume control</h2>
+
+      <p>
+      <pre><code><a>alsamixer</a>
+what to do :
+* press 'F6' -> select your sound card
+* use arrow keys to change volume
+</pre>
+      </code>
+      </p>
+
+      <h2 id="limit">5.The limitations</h2>
+      <a>
+      With pure ALSA:
+      <ol>
+      <ul>xyz </ul>
+      <ul>xyz </ul>
+      <ul>xyz </ul>
+      <ul>xyz </ul>
+      </ol>
+      </a>
+      <h2 id="tshoot">6 . Common Mistakes</h2>
+      <h3>1 . User not in audio GROUP </h3>
+      <code>usermod -aG audio username</code>
+      <h3>2 . Missing firmware </h3>
+      <code>pacman -S sof-firmware alsa-ucm-conf</code>
+    </article>
+
+    <div class="post-nav">
+      <div>
+        <a href="dwm-setup.html">
+          <span class="nav-label">← previous</span>
+          Building a minimal dev environment with dwm and st
+        </a>
+      </div>
+      <div style="text-align: right;">
+        <a href="../index.html">
+          <span class="nav-label">back to</span>
+          all posts →
+        </a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2025 terminal notes</span>
+    <span>built with vim &amp; spite</span>
+  </div>
+</footer>
+
+</body>
+</html>
