@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="64"
+   height="64"
+   viewBox="0 0 16.933334 16.933335"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   sodipodi:docname="terminal-Paag.ico"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="7.2988799"
+     inkscape:cx="20.619602"
+     inkscape:cy="28.977049"
+     inkscape:window-width="1918"
+     inkscape:window-height="1062"
+     inkscape:window-x="0"
+     inkscape:window-y="16"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <defs
+     id="defs1">
+    <rect
+       x="226.29839"
+       y="214.49152"
+       width="348.30273"
+       height="310.91428"
+       id="rect9" />
+    <rect
+       x="141.68246"
+       y="232.20181"
+       width="489.98517"
+       height="312.88211"
+       id="rect8" />
+    <rect
+       x="123.97215"
+       y="131.8434"
+       width="488.01736"
+       height="350.27054"
+       id="rect7" />
+    <rect
+       x="169.75729"
+       y="379.17099"
+       width="100.18463"
+       height="23.654703"
+       id="rect6" />
+    <rect
+       x="145.40686"
+       y="342.29749"
+       width="232.37268"
+       height="115.49062"
+       id="rect4" />
+    <rect
+       x="152.2635"
+       y="456.72284"
+       width="26.133266"
+       height="18.753666"
+       id="rect3" />
+    <rect
+       x="150.37279"
+       y="466.94708"
+       width="319.2124"
+       height="155.64903"
+       id="rect1" />
+  </defs>
+  <path
+     style="font-size:48px;font-family:'D2CodingLigature Nerd Font';-inkscape-font-specification:'D2CodingLigature Nerd Font';white-space:pre;fill:#d79921;stroke-width:1536.16"
+     d="m 8.5665295,7.5724753 q 0.018301,0.7706032 -0.1281028,1.437071 -0.1281028,0.6456405 -0.43921,1.1246637 -0.2928066,0.479024 -0.7686173,0.749777 -0.4758107,0.270752 -1.0980247,0.270752 -0.7503169,0 -1.244428,-0.395715 Q 4.3940355,10.363309 3.9914264,9.8842851 3.5888173,9.3844343 3.2228091,8.9887191 2.8751013,8.593004 2.4175909,8.593004 q -1.0431233,0 -1.0431233,1.978576 H 0.0385374 Q 0.02023699,9.8009765 0.14833988,9.155336 0.29474319,8.4888683 0.58754978,8.0098447 0.89865679,7.530821 1.3561671,7.2600685 1.8319778,6.989316 2.4724922,6.989316 q 0.7320165,0 1.2261276,0.3957153 0.5124116,0.3957151 0.8967203,0.8955658 0.4026091,0.4790237 0.7686173,0.8747389 0.3660082,0.3957153 0.8235185,0.3957153 0.5673128,0 0.8052182,-0.4581966 Q 7.2305994,8.6346581 7.2305994,7.5724753 Z M 11.549497,16.840541 H 10.048863 L 15.429185,0.24133049 h 1.427432 z"
+     id="text8"
+     aria-label="~/" />
+</svg>
